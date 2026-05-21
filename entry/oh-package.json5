@@ -1,0 +1,17 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    '@ohos/common': "file:../common",
+    '@ohos/explore': "file:../features/explore",
+    '@ohos/shoppingMall': "file:../features/shoppingMall",
+    '@ohos/buyingCar': "file:../features/buyingCar",
+    '@ohos/mine': "file:../features/mine",
+    '@ohos/service': "file:../features/service"
+  }
+}
+
