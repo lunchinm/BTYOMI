@@ -1,15 +1,15 @@
 ---
 name: "code-guidelines-checker"
-description: "Checks code against CODE_GUIDELINES.md standards for the BTYOMI project. Invoke when user requests code fixes or new code generation within c:\treatest\BTYOMI."
+description: "Checks code against CODE_GUIDELINES.md standards for the BTYOMI project. Invoke when user requests code fixes or new code generation within the project."
 ---
 
 # Code Guidelines Checker
 
-This skill checks code against the project's coding guidelines defined in `CODE_GUIDELINES.md` for the BTYOMI project.
+This skill checks code against the project's coding guidelines defined in `../../../CODE_GUIDELINES.md` for the BTYOMI project.
 
 ## Scope
 
-- **Project**: c:\treatest\BTYOMI
+- **Project**: BTYOMI (root: `../../../`)
 - **File Types**: ArkTS (.ets) files
 
 ## Guidelines Checked
@@ -49,7 +49,7 @@ Invoke this skill when:
 
 ## Validation Steps
 
-1. Read `CODE_GUIDELINES.md` for current standards
+1. Read `../../../CODE_GUIDELINES.md` for current standards
 2. Analyze target code against guidelines
 3. Report violations and suggest fixes
 4. Apply fixes automatically when requested
