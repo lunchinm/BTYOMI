@@ -1,0 +1,58 @@
+{
+  "app": {
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "6.0.0(20)",
+        "runtimeOS": "HarmonyOS"
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "explore",
+      "srcPath": "./features/explore"
+    },
+    {
+      "name": "common",
+      "srcPath": "./common"
+    },
+    {
+      "name": "shoppingMall",
+      "srcPath": "./features/shoppingMall"
+    },
+    {
+      "name": "buyingCar",
+      "srcPath": "./features/buyingCar"
+    },
+    {
+      "name": "service",
+      "srcPath": "./features/service"
+    },
+    {
+      "name": "mine",
+      "srcPath": "./features/mine"
+    }
+  ]
+}

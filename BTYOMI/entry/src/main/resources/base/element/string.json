@@ -1,0 +1,56 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "This module template implements Splash Screen functions."
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "label"
+    },
+    {
+      "name": "main_page_content",
+      "value": "Hello World"
+    },
+    {
+      "name": "ability_desc",
+      "value": "This ability loads SplashScreenPage."
+    },
+    {
+      "name": "ability_label",
+      "value": "auto"
+    },
+    {
+      "name": "copyright",
+      "value": "Copyright @2021-2027 xx Company"
+    },
+    {
+      "name": "skip",
+      "value": "Skip %d"
+    },
+    {
+      "name": "copyright_title",
+      "value": "Video"
+    },
+    {
+      "name": "phone_number",
+      "value": "PhoneNumber"
+    },
+    {
+      "name": "login_password",
+      "value": "Password"
+    },
+    {
+      "name": "sent_to",
+      "value": "Sent to"
+    },
+    {
+      "name": "ver_code",
+      "value": "Verification code"
+    }
+  ]
+}

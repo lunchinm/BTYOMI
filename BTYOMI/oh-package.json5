@@ -1,0 +1,15 @@
+{
+  "modelVersion": "6.0.0",
+  "name": "cardemo",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "@ohos/hamock": "^1.0.0",
+    "@ohos/hypium": "^1.0.20"
+  },
+  "devDependencies": {
+  }
+}
