@@ -1,6 +1,6 @@
 import { CommonConstants } from '@ohos/common';
 import { AICarRecommendService } from '../service/AICarRecommendService';
-import type { UserPreferences, RecommendResult } from '../model/AICarModel';
+import type { UserPreferences, RecommendResult, Question, CarInfo, AICarRecommendation } from '../model/AICarModel';
 
 interface QuestionOptionType {
   label: string;
@@ -9,11 +9,58 @@ interface QuestionOptionType {
   max?: number;
 }
 
-interface Question {
-  id: string;
-  question: string;
-  type: string;
-  options: QuestionOptionType[];
+function isCarInfo(car: CarInfo | AICarRecommendation): boolean {
+  return (car as CarInfo).id !== undefined;
+}
+
+function getCarImage(car: CarInfo | AICarRecommendation): string {
+  if (isCarInfo(car)) {
+    return (car as CarInfo).image;
+  }
+  return (car as AICarRecommendation).image;
+}
+
+function getCarBrand(car: CarInfo | AICarRecommendation): string {
+  if (isCarInfo(car)) {
+    return (car as CarInfo).brand;
+  }
+  return (car as AICarRecommendation).brand;
+}
+
+function getCarModel(car: CarInfo | AICarRecommendation): string {
+  if (isCarInfo(car)) {
+    return (car as CarInfo).model;
+  }
+  return (car as AICarRecommendation).model;
+}
+
+function getCarPrice(car: CarInfo | AICarRecommendation): string {
+  if (isCarInfo(car)) {
+    return `${((car as CarInfo).price / 10000).toFixed(1)}万`;
+  }
+  return (car as AICarRecommendation).price;
+}
+
+function getCarRange(car: CarInfo | AICarRecommendation): string {
+  if (isCarInfo(car)) {
+    return `${(car as CarInfo).range}km`;
+  }
+  return (car as AICarRecommendation).range;
+}
+
+function getCarPowerType(car: CarInfo | AICarRecommendation): string {
+  if (isCarInfo(car)) {
+    return (car as CarInfo).powerType;
+  }
+  return (car as AICarRecommendation).powerType;
+}
+
+function getCarResourceName(car: CarInfo | AICarRecommendation): string {
+  const imageName: string = getCarImage(car);
+  if (imageName === '') {
+    return 'app.media.brand_car1';
+  }
+  return 'app.media.' + imageName;
 }
 
 @Entry
@@ -33,7 +80,6 @@ struct AICarSelectPagePreview {
 @Component
 export struct AICarSelectPage {
   @Consume('pageInfos') pageInfos: NavPathStack = new NavPathStack();
-
   @State currentStep: number = 0;
   @State preferences: UserPreferences = {
     budgetMin: -1,
@@ -41,12 +87,12 @@ export struct AICarSelectPage {
     rangeRequirement: -1,
     bodyType: '',
     powerType: '',
-    features: []
+    naturalLanguageDescription: ''
   };
-  @State selectedFeatures: string[] = [];
   @State results: RecommendResult[] = [];
   @State showResults: boolean = false;
   @State isLoading: boolean = false;
+  @State naturalLanguageInput: string = '';
 
   aboutToAppear() {
     this.currentStep = 0;
@@ -56,12 +102,12 @@ export struct AICarSelectPage {
       rangeRequirement: -1,
       bodyType: '',
       powerType: '',
-      features: []
+      naturalLanguageDescription: ''
     };
-    this.selectedFeatures = [];
     this.results = [];
     this.showResults = false;
     this.isLoading = false;
+    this.naturalLanguageInput = '';
   }
 
   private questions: Question[] = [
@@ -111,16 +157,9 @@ export struct AICarSelectPage {
     },
     {
       id: 'q5',
-      question: '您关注哪些配置功能？(可多选)',
-      type: 'multiple',
-      options: [
-        { label: '自动驾驶', value: '自动驾驶' },
-        { label: '全景天窗', value: '全景天窗' },
-        { label: '座椅加热/通风', value: '座椅加热' },
-        { label: '大屏交互', value: '大屏交互' },
-        { label: '音响系统', value: '音响' },
-        { label: '快充能力', value: '超级充电' }
-      ]
+      question: '请用自然语言描述您的其他需求',
+      type: 'text',
+      placeholder: '例如：我需要一辆适合家庭使用的车，空间要大，最好有自动驾驶功能，安全性要好...'
     }
   ];
 
@@ -147,19 +186,23 @@ export struct AICarSelectPage {
     Column({ space: 20 }) {
       this.buildHeader();
       this.buildProgress();
-      
+
       Column({ space: 20 }) {
         Text(this.getCurrentQuestionText())
           .fontSize(18)
           .fontWeight(700)
           .textAlign(TextAlign.Center)
           .width('100%');
-        
-        this.buildCurrentQuestionOptions();
+
+        if (this.questions[this.currentStep].type === 'text') {
+          this.buildTextQuestion();
+        } else {
+          this.buildChoiceQuestion();
+        }
       }
       .width('100%')
       .padding({ top: 30 });
-      
+
       this.buildNavigationButtons();
     }
     .width('100%')
@@ -218,47 +261,39 @@ export struct AICarSelectPage {
     .padding({ top: 20 });
   }
 
-  @Builder
-  buildQuestionContent() {
-    Column({ space: 20 }) {
-      Text(this.getCurrentQuestionText())
-        .fontSize(18)
-        .fontWeight(700)
-        .textAlign(TextAlign.Center)
-        .width('100%');
-
-      this.buildCurrentQuestionOptions();
-    }
-    .width('100%')
-    .padding({ top: 30 });
-  }
-
   private getCurrentQuestionText(): string {
     return this.questions[this.currentStep]?.question || '';
   }
 
   @Builder
-  buildCurrentQuestionOptions() {
-    if (this.questions[this.currentStep].type === 'single' || this.questions[this.currentStep].type === 'range') {
-      Column({ space: 12 }) {
-        Row({ space: 12 }) {
-          ForEach(this.questions[this.currentStep].options.slice(0, 2), (option: QuestionOptionType) => {
-            this.buildOptionItem(option, this.questions[this.currentStep]);
-          });
-        }
-        Row({ space: 12 }) {
-          ForEach(this.questions[this.currentStep].options.slice(2, 4), (option: QuestionOptionType) => {
-            this.buildOptionItem(option, this.questions[this.currentStep]);
-          });
-        }
-      }
-    } else if (this.questions[this.currentStep].type === 'multiple') {
-      Column({ space: 12 }) {
-        ForEach(this.questions[this.currentStep].options, (option: QuestionOptionType) => {
-          this.buildMultiSelectItem(option);
+  buildChoiceQuestion() {
+    Column({ space: 12 }) {
+      Row({ space: 12 }) {
+        ForEach(this.questions[this.currentStep].options?.slice(0, 2) || [], (option: QuestionOptionType) => {
+          this.buildOptionItem(option, this.questions[this.currentStep]);
         });
-      };
+      }
+      Row({ space: 12 }) {
+        ForEach(this.questions[this.currentStep].options?.slice(2, 4) || [], (option: QuestionOptionType) => {
+          this.buildOptionItem(option, this.questions[this.currentStep]);
+        });
+      }
     }
+  }
+
+  @Builder
+  buildTextQuestion() {
+    TextArea({ placeholder: this.questions[this.currentStep].placeholder })
+      .width('100%')
+      .height(150)
+      .backgroundColor('#FFFFFF')
+      .borderRadius(12)
+      .padding(16)
+      .fontSize(14)
+      .onChange((value: string) => {
+        this.naturalLanguageInput = value;
+        this.preferences.naturalLanguageDescription = value;
+      });
   }
 
   @Builder
@@ -319,10 +354,10 @@ export struct AICarSelectPage {
         this.preferences.rangeRequirement = option.value as number || 400;
         break;
       case 'q3':
-        this.preferences.bodyType = option.value as string || 'any';
+        this.preferences.bodyType = option.value as string || 'q3_any';
         break;
       case 'q4':
-        this.preferences.powerType = option.value as string || 'any';
+        this.preferences.powerType = option.value as string || 'q4_any';
         break;
     }
   }
@@ -333,23 +368,23 @@ export struct AICarSelectPage {
         this.preferences.rangeRequirement = -1;
         this.preferences.bodyType = '';
         this.preferences.powerType = '';
-        this.selectedFeatures = [];
-        this.preferences.features = [];
+        this.naturalLanguageInput = '';
+        this.preferences.naturalLanguageDescription = '';
         break;
       case 2:
         this.preferences.bodyType = '';
         this.preferences.powerType = '';
-        this.selectedFeatures = [];
-        this.preferences.features = [];
+        this.naturalLanguageInput = '';
+        this.preferences.naturalLanguageDescription = '';
         break;
       case 3:
         this.preferences.powerType = '';
-        this.selectedFeatures = [];
-        this.preferences.features = [];
+        this.naturalLanguageInput = '';
+        this.preferences.naturalLanguageDescription = '';
         break;
       case 4:
-        this.selectedFeatures = [];
-        this.preferences.features = [];
+        this.naturalLanguageInput = '';
+        this.preferences.naturalLanguageDescription = '';
         break;
       case 5:
         break;
@@ -372,51 +407,10 @@ export struct AICarSelectPage {
         this.preferences.powerType = '';
         break;
       case 4:
-        this.selectedFeatures = [];
-        this.preferences.features = [];
+        this.naturalLanguageInput = '';
+        this.preferences.naturalLanguageDescription = '';
         break;
     }
-  }
-
-  @Builder
-  buildMultiSelectItem(option: QuestionOptionType) {
-    Row({ space: 12 }) {
-      Stack({ alignContent: Alignment.Center }) {
-        Circle()
-          .width(24)
-          .height(24)
-          .stroke('#DDDDDD')
-          .fill(this.selectedFeatures.includes(option.value as string) ? '#2ECC71' : '#FFFFFF');
-
-        if (this.selectedFeatures.includes(option.value as string)) {
-          Text('√')
-            .fontSize(14)
-            .fontWeight(700)
-            .fontColor('#FFFFFF');
-        }
-      }
-
-      Text(option.label)
-        .fontSize(16)
-        .fontColor('#333333');
-    }
-    .width('100%')
-    .height(48)
-    .alignItems(VerticalAlign.Center)
-    .backgroundColor('#FFFFFF')
-    .borderRadius(12)
-    .padding({ left: 16 })
-    .onClick(() => this.toggleFeature(option.value as string));
-  }
-
-  private toggleFeature(feature: string) {
-    const index = this.selectedFeatures.indexOf(feature);
-    if (index > -1) {
-      this.selectedFeatures.splice(index, 1);
-    } else {
-      this.selectedFeatures.push(feature);
-    }
-    this.preferences.features = [...this.selectedFeatures];
   }
 
   @Builder
@@ -446,7 +440,6 @@ export struct AICarSelectPage {
           .fontColor('#FFFFFF')
           .borderRadius(24)
           .onClick(() => {
-            // 重置后续步骤的状态
             this.resetNextStepPreferences(this.currentStep + 1);
             this.currentStep++;
           });
@@ -468,39 +461,34 @@ export struct AICarSelectPage {
 
   async executeRecommend() {
     this.isLoading = true;
-    await new Promise<void>((resolve) => setTimeout(resolve, 1500));
-    
-    await this.recommendService.initialize();
-    
-    // 创建一个新的 preferences 对象，用于推荐算法
-    const preferencesForRecommend: UserPreferences = {
-      budgetMin: this.preferences.budgetMin,
-      budgetMax: this.preferences.budgetMax,
-      rangeRequirement: this.preferences.rangeRequirement,
-      bodyType: this.preferences.bodyType === 'q3_any' ? '' : this.preferences.bodyType,
-      powerType: this.preferences.powerType === 'q4_any' ? '' : this.preferences.powerType,
-      features: this.preferences.features
-    };
-    
-    this.results = this.recommendService.recommend(preferencesForRecommend);
-    
-    if (this.results.length === 0) {
-      const carList = this.recommendService.getCarList();
-      const fallbackResults: RecommendResult[] = [];
-      for (const car of carList) {
-        const result: RecommendResult = {
-          car: car,
-          score: car.score,
-          reasons: [`${car.brand}${car.model} 综合评分：${car.score}分`]
-        };
-        fallbackResults.push(result);
-      }
-      fallbackResults.sort((a, b) => b.score - a.score);
-      this.results = fallbackResults.slice(0, 3);
+    try {
+      await this.recommendService.initialize();
+
+      const preferencesForRecommend: UserPreferences = {
+        budgetMin: this.preferences.budgetMin,
+        budgetMax: this.preferences.budgetMax,
+        rangeRequirement: this.preferences.rangeRequirement,
+        bodyType: this.preferences.bodyType === 'q3_any' ? '' : this.preferences.bodyType,
+        powerType: this.preferences.powerType === 'q4_any' ? '' : this.preferences.powerType,
+        naturalLanguageDescription: this.preferences.naturalLanguageDescription
+      };
+
+      this.results = await this.recommendService.recommend(preferencesForRecommend);
+      this.showResults = true;
+    } catch (error) {
+      AlertDialog.show({
+        title: '推荐失败',
+        message: `无法获取推荐结果：${error.message}`,
+        confirm: {
+          value: '确定',
+          action: () => {
+            this.isLoading = false;
+          }
+        }
+      });
+    } finally {
+      this.isLoading = false;
     }
-    
-    this.showResults = true;
-    this.isLoading = false;
   }
 
   @Builder
@@ -524,9 +512,9 @@ export struct AICarSelectPage {
       rangeRequirement: -1,
       bodyType: '',
       powerType: '',
-      features: []
+      naturalLanguageDescription: ''
     };
-    this.selectedFeatures = [];
+    this.naturalLanguageInput = '';
     this.results = [];
     this.showResults = false;
     this.currentStep = 0;
@@ -611,7 +599,7 @@ export struct AICarSelectPage {
               Column({ space: 12 }) {
                 Row({ space: 16 }) {
                   Stack({ alignContent: Alignment.TopStart }) {
-                    Image($r('app.media.brand_car1'))
+                    Image($r(getCarResourceName(result.car)))
                       .width(100)
                       .height(80)
                       .objectFit(ImageFit.Cover)
@@ -630,21 +618,21 @@ export struct AICarSelectPage {
                   }
 
                   Column({ space: 8 }) {
-                    Text(`${result.car.brand} ${result.car.model}`)
+                    Text(`${getCarBrand(result.car)} ${getCarModel(result.car)}`)
                       .fontSize(16)
                       .fontWeight(700)
                       .fontColor('#333333');
 
                     Row({ space: 16 }) {
-                      Text(`${(result.car.price / 10000).toFixed(1)}万`)
+                      Text(getCarPrice(result.car))
                         .fontSize(14)
                         .fontColor('#E74C3C');
 
-                      Text(`${result.car.range}km`)
+                      Text(getCarRange(result.car))
                         .fontSize(14)
                         .fontColor('#3498DB');
 
-                      Text(`${result.car.powerType}`)
+                      Text(getCarPowerType(result.car))
                         .fontSize(14)
                         .fontColor('#9B59B6');
                     }

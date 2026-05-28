@@ -14,6 +14,20 @@ export interface CarInfo {
   description: string;
 }
 
+export interface AICarRecommendation {
+  brand: string;
+  model: string;
+  price: string;
+  range: string;
+  powerType: string;
+  bodyType: string;
+  seatCount: string;
+  acceleration: string;
+  keyFeatures: string[];
+  matchReason: string;
+  image: string;
+}
+
 export interface CarDatabase {
   version: string;
   updateTime: string;
@@ -49,7 +63,8 @@ export interface Question {
   id: string;
   question: string;
   type: string;
-  options: QuestionOption[];
+  options?: QuestionOption[];
+  placeholder?: string;
 }
 
 export interface RecommendRules {
@@ -64,11 +79,11 @@ export interface UserPreferences {
   rangeRequirement: number;
   bodyType: string;
   powerType: string;
-  features: string[];
+  naturalLanguageDescription: string;
 }
 
 export interface RecommendResult {
-  car: CarInfo;
+  car: CarInfo | AICarRecommendation;
   score: number;
   reasons: string[];
 }
@@ -78,4 +93,53 @@ export interface AIRecommendResponse {
   message: string;
   results: RecommendResult[];
   preferences: UserPreferences;
+}
+
+export interface VolcengineMessage {
+  role: string;
+  content: string;
+}
+
+export interface VolcengineUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
+export interface VolcengineError {
+  message: string;
+  type: string;
+  code: string;
+}
+
+export interface VolcengineChoice {
+  message: VolcengineMessage;
+  finish_reason: string;
+  index: number;
+}
+
+export interface VolcengineResponseFormat {
+  type: string;
+}
+
+export interface VolcengineRequest {
+  model: string;
+  messages: VolcengineMessage[];
+  temperature?: number;
+  max_tokens?: number;
+  response_format?: VolcengineResponseFormat;
+}
+
+export interface VolcengineResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: VolcengineChoice[];
+  usage: VolcengineUsage;
+  error?: VolcengineError;
+}
+
+export interface AIResponseContent {
+  recommendations: AICarRecommendation[];
 }

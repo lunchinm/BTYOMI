@@ -10,3 +10,14 @@
 /.clang-tidy
 **/.test
 /.appanalyzer
+/.trae
+**/.preview
+**/cache
+**/intermediates
+**/generated
+**/outputs
+**/logs
+*.hprof
+*.log
+local.properties
+.DS_Store
