@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { CommodityModel, CommodityData, CommonConstants } from '@ohos/common/Index';
+import { CommodityModel, CommodityData, CommonConstants, BehaviorTracker, BehaviorEvent } from '@ohos/common/Index';
 import { ShoppingMallConstants } from '../constants/ShoppingMallConstants';
 
 @Extend(Text)
@@ -39,7 +39,9 @@ export struct CommodityDetailPage {
   @State isShow: boolean = false;
   @State checked: boolean = true;
   @State addCount: number = 1;
-  @State scrollHeight: number = 0; //  滑动高度 滑动临界点 100
+  @State scrollHeight: number = 0;
+  private behaviorTracker: BehaviorTracker = BehaviorTracker.getInstance();
+  private enterTime: number = 0;
 
   @Builder
   footer(addCar?: Function, buy?: Function) {
@@ -56,10 +58,12 @@ export struct CommodityDetailPage {
       Row() {
         Text('加入购物车').addOrBuy(ShoppingMallConstants.CHECKED_COLOR)
           .onClick(() => {
+            this.trackAction('add_cart');
             addCar ? addCar() : '';
           });
         Text('立即购买').addOrBuy(Color.White, ShoppingMallConstants.CHECKED_COLOR)
           .onClick(() => {
+            this.trackAction('buy');
             buy ? buy() : '';
           });
       }
@@ -167,6 +171,32 @@ export struct CommodityDetailPage {
     };
   }
 
+  private trackPageView(commodityId: string): void {
+    const event: BehaviorEvent = {
+      eventType: 'view',
+      targetId: commodityId,
+      targetType: 'commodity_detail',
+      timestamp: Date.now(),
+      pageName: 'CommodityDetailPage'
+    };
+    this.behaviorTracker.track(event);
+  }
+
+  private trackAction(actionType: string): void {
+    const extra: Record<string, string> = {};
+    extra['commodityId'] = this.commodityData?.id ?? '';
+    extra['price'] = this.commodityData?.price?.toString() ?? '';
+    const event: BehaviorEvent = {
+      eventType: actionType,
+      targetId: this.commodityData?.id ?? 'unknown',
+      targetType: 'commodity',
+      timestamp: Date.now(),
+      pageName: 'CommodityDetailPage',
+      extra: extra
+    };
+    this.behaviorTracker.track(event);
+  }
+
   build() {
     NavDestination() {
       Column() {
@@ -272,9 +302,27 @@ export struct CommodityDetailPage {
       try {
         const id = ctx?.pathInfo?.param as string;
         this.commodityData = this.commodityModel.getCommodityDetail(id);
+        this.behaviorTracker.init();
+        this.enterTime = Date.now();
+        this.trackPageView(id);
       } catch (e) {
         // ...
       }
+    })
+    .onDisAppear(() => {
+      const stayDuration: number = Date.now() - this.enterTime;
+      const extra: Record<string, string> = {};
+      extra['commodityId'] = this.commodityData?.id ?? '';
+      extra['stayDuration'] = stayDuration.toString();
+      const event: BehaviorEvent = {
+        eventType: 'view',
+        targetId: this.commodityData?.id ?? 'unknown',
+        targetType: 'commodity_detail',
+        timestamp: Date.now(),
+        pageName: 'CommodityDetailPage',
+        extra: extra
+      };
+      this.behaviorTracker.track(event);
     });
   }
 }

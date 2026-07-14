@@ -13,9 +13,11 @@
  * limitations under the License.
  */
 
-import { UIAbility } from '@kit.AbilityKit';
+import { UIAbility, AbilityConstant } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
+import { KeyboardAvoidMode } from '@kit.ArkUI';
 import { CommonConstants, Logger, preferencesUtil } from '@ohos/common';
+import { ChatService } from '@ohos/aiAssistant';
 
 export default class EntryAbility extends UIAbility {
   async onCreate() {
@@ -30,11 +32,11 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
-    // Main window is created, set main page for this ability
     Logger.info('Ability onWindowStageCreate');
 
     windowStage.loadContent('pages/NavigationPage', (err) => {
-      windowStage?.getMainWindowSync()?.setWindowLayoutFullScreen(true); // 界面沉浸式
+      windowStage?.getMainWindowSync()?.setWindowLayoutFullScreen(true);
+      windowStage?.getMainWindowSync()?.getUIContext()?.setKeyboardAvoidMode(KeyboardAvoidMode.RESIZE);
 
       if (err.code) {
         Logger.error('Failed to load the content. Cause: ', JSON.stringify(err) ?? '');
@@ -55,7 +57,8 @@ export default class EntryAbility extends UIAbility {
   }
 
   onBackground(): void {
-    // Ability has back to background
     Logger.info('Ability onBackground');
+    const chatService: ChatService = ChatService.getInstance();
+    chatService.cancelCurrentRequest();
   }
 };

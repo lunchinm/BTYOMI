@@ -15,6 +15,7 @@
 
 import { CommonConstants } from '@ohos/common/Index';
 import { DetailIconData, DetailIconModel } from '@ohos/common/src/main/ets/model/BuyingCarModel';
+import { BehaviorTracker, BehaviorEvent } from '@ohos/common';
 import { car, CarInfo, carParamIcon, paramIconModel, ParamInfo } from '../model/BrandModel';
 
 @Component
@@ -25,9 +26,10 @@ export struct BuyingCarDetailPage {
   @State isShow: boolean = false;
   @State checked: boolean = true;
   @State addCount: number = 1;
-  @State scrollHeight: number = 0; // 滑动高度 滑动临界点 100
+  @State scrollHeight: number = 0;
   @State indicatorIndex: number = 0;
   @State typeIndex: number = 0;
+  @State isFollowed: boolean = false;
   private paramArr: ParamInfo[] = [];
   private bottomParamArr: ParamInfo[] = [];
   private tabArr: string[] = ['综述', '资讯', '降价', '销售'];
@@ -35,10 +37,64 @@ export struct BuyingCarDetailPage {
   private carArr: CarInfo = car.getCarList()[0];
   detailIconModel: DetailIconModel = DetailIconModel.getDetailIconModel();
   arr: DetailIconData[] = this.detailIconModel.getDetailIcon();
+  private behaviorTracker: BehaviorTracker = BehaviorTracker.getInstance();
+  private enterTime: number = 0;
 
   aboutToAppear() {
     this.paramArr = paramIconModel.getMainList();
     this.bottomParamArr = carParamIcon.getMainList();
+    this.behaviorTracker.init();
+    this.enterTime = Date.now();
+    this.trackViewEvent();
+  }
+
+  aboutToDisappear() {
+    const stayDuration: number = Date.now() - this.enterTime;
+    const extra: Record<string, string> = {};
+    extra['carName'] = '问界M7';
+    extra['stayDuration'] = stayDuration.toString();
+    const event: BehaviorEvent = {
+      eventType: 'view',
+      targetId: '问界M7',
+      targetType: 'car_detail',
+      timestamp: Date.now(),
+      pageName: 'BuyingCarDetailPage',
+      extra: extra
+    };
+    this.behaviorTracker.track(event);
+  }
+
+  private trackViewEvent(): void {
+    const extra: Record<string, string> = {};
+    extra['brand'] = 'AITO';
+    extra['bodyType'] = 'SUV';
+    extra['priceRange'] = '24.98-37.98万';
+    const event: BehaviorEvent = {
+      eventType: 'view',
+      targetId: '问界M7',
+      targetType: 'car_detail',
+      timestamp: Date.now(),
+      pageName: 'BuyingCarDetailPage',
+      extra: extra
+    };
+    this.behaviorTracker.track(event);
+  }
+
+  private toggleFollow(): void {
+    this.isFollowed = !this.isFollowed;
+    const extra: Record<string, string> = {};
+    extra['brand'] = 'AITO';
+    extra['bodyType'] = 'SUV';
+    extra['priceRange'] = '24.98-37.98万';
+    const event: BehaviorEvent = {
+      eventType: this.isFollowed ? 'favorite_add' : 'favorite_remove',
+      targetId: '问界M7',
+      targetType: 'car_detail',
+      timestamp: Date.now(),
+      pageName: 'BuyingCarDetailPage',
+      extra: extra
+    };
+    this.behaviorTracker.track(event);
   }
 
   build() {
@@ -371,12 +427,15 @@ export struct BuyingCarDetailPage {
         };
 
         Column({ space: 2 }) {
-          Image($r('app.media.ic_concern'))
+          Image(this.isFollowed ? $r('app.media.ic_concern') : $r('app.media.ic_concern'))
             .width(15)
-            .fillColor(Color.Black);
-          Text('关注')
-            .fontSize(10);
-        };
+            .fillColor(this.isFollowed ? Color.Red : Color.Black);
+          Text(this.isFollowed ? '已关注' : '关注')
+            .fontSize(10)
+            .fontColor(this.isFollowed ? Color.Red : Color.Black);
+        }.onClick(() => {
+          this.toggleFollow();
+        });
       }
       .margin({
         left: CommonConstants.MAIN_MARGIN * 2
@@ -403,6 +462,20 @@ export struct BuyingCarDetailPage {
             bottom: CommonConstants.L_MAIN_PADDING / 2,
             left: CommonConstants.MAIN_PADDING * 2,
             right: CommonConstants.MAIN_PADDING * 2,
+          })
+          .onClick(() => {
+            const extra: Record<string, string> = {};
+            extra['carName'] = '问界M7';
+            extra['priceRange'] = '24.98-37.98万';
+            const event: BehaviorEvent = {
+              eventType: 'search',
+              targetId: '问界M7',
+              targetType: 'get_price',
+              timestamp: Date.now(),
+              pageName: 'BuyingCarDetailPage',
+              extra: extra
+            };
+            this.behaviorTracker.track(event);
           });
       }
       .margin({

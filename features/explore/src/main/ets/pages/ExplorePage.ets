@@ -15,7 +15,7 @@
 
 import display from '@ohos.display';
 import componentUtils from '@ohos.arkui.componentUtils';
-import { CommonConstants, TabConstants } from '@ohos/common/Index';
+import { CommonConstants, TabConstants, BehaviorTracker, BehaviorEvent } from '@ohos/common/Index';
 import { RecommendationComp } from '../components/RecommendationComp';
 import { ComponentUtils, LengthMetrics, MeasureUtils } from '@kit.ArkUI';
 import { RecommendationConstants } from '../constants/RecommendationConstants';
@@ -38,9 +38,23 @@ export struct ExplorePage {
   private uiContext: UIContext = this.getUIContext();
   private measureUtil: MeasureUtils = this.uiContext.getMeasureUtils();
   private componentUtils: ComponentUtils = this.uiContext.getComponentUtils();
+  private behaviorTracker: BehaviorTracker = BehaviorTracker.getInstance();
 
   aboutToAppear(): void {
-    this.displayInfo = display.getDefaultDisplaySync(); //获取屏幕实例
+    this.displayInfo = display.getDefaultDisplaySync();
+    this.behaviorTracker.init();
+    this.trackPageView();
+  }
+
+  private trackPageView(): void {
+    const event: BehaviorEvent = {
+      eventType: 'view',
+      targetId: 'ExplorePage',
+      targetType: 'page',
+      timestamp: Date.now(),
+      pageName: 'ExplorePage'
+    };
+    this.behaviorTracker.track(event);
   }
 
   // 获取组件大小、位置、平移缩放旋转及仿射矩阵属性信息。
@@ -125,6 +139,17 @@ export struct ExplorePage {
     return this.uiContext.px2vp(width);
   }
 
+  private trackTabSwitch(tabName: string): void {
+    const event: BehaviorEvent = {
+      eventType: 'click',
+      targetId: tabName,
+      targetType: 'explore_tab',
+      timestamp: Date.now(),
+      pageName: 'ExplorePage'
+    };
+    this.behaviorTracker.track(event);
+  }
+
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
       Column() {
@@ -193,11 +218,10 @@ export struct ExplorePage {
                     })
                     .onClick(() => {
                       this.indicatorIndex = index;
-                      // 点击tabbar下划线动效
                       this.scrollUnderline(index);
                       this.scrollIntoCenter(index);
-                      // 跟swiper进行联动
                       this.swiperIndex = index;
+                      this.trackTabSwitch(item);
                       this.uiContext.getPromptAction().showToast({
                         message: '仅作展示',
                         duration: CommonConstants.ADVERTISING_INTERVAL_TIME,

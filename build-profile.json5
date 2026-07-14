@@ -53,6 +53,10 @@
     {
       "name": "mine",
       "srcPath": "./features/mine"
+    },
+    {
+      "name": "aiAssistant",
+      "srcPath": "./features/aiAssistant"
     }
   ]
 }

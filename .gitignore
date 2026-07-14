@@ -1,5 +1,5 @@
 /node_modules
-/oh_modules
+**/oh_modules
 /local.properties
 /.idea
 **/build
@@ -21,3 +21,7 @@
 *.log
 local.properties
 .DS_Store
+
+# 开发规划文档（不公开）
+PLAN.md
+TODO.md

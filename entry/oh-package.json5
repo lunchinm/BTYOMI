@@ -11,7 +11,8 @@
     '@ohos/shoppingMall': "file:../features/shoppingMall",
     '@ohos/buyingCar': "file:../features/buyingCar",
     '@ohos/mine': "file:../features/mine",
-    '@ohos/service': "file:../features/service"
+    '@ohos/service': "file:../features/service",
+    '@ohos/aiAssistant': "file:../features/aiAssistant"
   }
 }
 

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import { CommonConstants, LazyDataSource, CommodityData, CommodityModel } from '@ohos/common';
+import { CommonConstants, LazyDataSource, CommodityData, CommodityModel, BehaviorTracker, BehaviorEvent } from '@ohos/common';
 import { ShoppingMallConstants } from '../constants/ShoppingMallConstants';
 import { CommodityItemComp } from '../components/CommodityItemComp';
 
@@ -79,10 +79,24 @@ export struct ShoppingMallPage {
   flagUP: boolean = true; // 是否时向上滑 true向上滑  false 向下滑
   flagReachStart: Boolean = true; // 是否在起始位置
   uiContext: UIContext = this.getUIContext()
+  private behaviorTracker: BehaviorTracker = BehaviorTracker.getInstance();
 
   aboutToAppear() {
     this.headerHeight += this.topHeight;
     this.commodityList.pushArrayData(this.commodityModel.getAllList());
+    this.behaviorTracker.init();
+    this.trackPageView();
+  }
+
+  private trackPageView(): void {
+    const event: BehaviorEvent = {
+      eventType: 'view',
+      targetId: 'ShoppingMallPage',
+      targetType: 'page',
+      timestamp: Date.now(),
+      pageName: 'ShoppingMallPage'
+    };
+    this.behaviorTracker.track(event);
   }
 
   changeState(scrollOffset: number) {
@@ -123,6 +137,7 @@ export struct ShoppingMallPage {
           ForEach(this.swiperList, (item: CommodityData) => {
             Image(item.picture).blur(this.radius / 10).height(this.swiperHeight)
               .onClick(() => {
+                this.trackCommodityClick(item.id, 'swiper');
                 this.pageInfos.pushPathByName('CommodityDetailPage', item.id);
               })
           })
@@ -173,6 +188,7 @@ export struct ShoppingMallPage {
             CommodityItemComp({ commodityData: item })
           }
           .onClick(() => {
+            this.trackCommodityClick(item.id, 'flow_item');
             this.pageInfos.pushPathByName('CommodityDetailPage', item.id);
           })
           .margin({
@@ -240,12 +256,37 @@ export struct ShoppingMallPage {
     .width(ShoppingMallConstants.TAB_WIDTH)
     .onClick(() => {
       this.currentIndex = index;
-      // 模拟请求
+      this.trackCategorySwitch(name);
       this.commodityList.clear();
       setTimeout(() => {
         this.commodityList.pushArrayData(this.commodityModel.getAllList());
       }, 1000)
     })
+  }
+
+  private trackCommodityClick(commodityId: string, source: string): void {
+    const extra: Record<string, string> = {};
+    extra['source'] = source;
+    const event: BehaviorEvent = {
+      eventType: 'click',
+      targetId: commodityId,
+      targetType: 'commodity',
+      timestamp: Date.now(),
+      pageName: 'ShoppingMallPage',
+      extra: extra
+    };
+    this.behaviorTracker.track(event);
+  }
+
+  private trackCategorySwitch(categoryName: ResourceStr): void {
+    const event: BehaviorEvent = {
+      eventType: 'click',
+      targetId: `${categoryName}`,
+      targetType: 'category_tab',
+      timestamp: Date.now(),
+      pageName: 'ShoppingMallPage'
+    };
+    this.behaviorTracker.track(event);
   }
 
   scrollFun() {

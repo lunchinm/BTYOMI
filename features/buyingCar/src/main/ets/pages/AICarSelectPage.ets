@@ -80,6 +80,7 @@ struct AICarSelectPagePreview {
 @Component
 export struct AICarSelectPage {
   @Consume('pageInfos') pageInfos: NavPathStack = new NavPathStack();
+  @StorageProp('avoidArea') topHeight: number = 0;
   @State currentStep: number = 0;
   @State preferences: UserPreferences = {
     budgetMin: -1,
@@ -206,7 +207,7 @@ export struct AICarSelectPage {
       this.buildNavigationButtons();
     }
     .width('100%')
-    .padding({ top: CommonConstants.PUBLIC_SPACE, left: CommonConstants.PUBLIC_SPACE, right: CommonConstants.PUBLIC_SPACE });
+    .padding({ top: this.topHeight + CommonConstants.PUBLIC_SPACE, left: CommonConstants.PUBLIC_SPACE, right: CommonConstants.PUBLIC_SPACE });
   }
 
   @Builder
@@ -502,7 +503,7 @@ export struct AICarSelectPage {
       }
     }
     .width('100%')
-    .padding({ top: CommonConstants.PUBLIC_SPACE, left: CommonConstants.PUBLIC_SPACE, right: CommonConstants.PUBLIC_SPACE });
+    .padding({ top: this.topHeight + CommonConstants.PUBLIC_SPACE, left: CommonConstants.PUBLIC_SPACE, right: CommonConstants.PUBLIC_SPACE });
   }
 
   private resetPreferences() {

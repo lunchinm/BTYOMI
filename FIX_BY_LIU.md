@@ -873,3 +873,353 @@ public recommend(preferences: UserPreferences): RecommendResult[] {
 1. 测试不同的偏好组合，确认推荐结果至少包含3个车型
 2. 选择偏好条件较宽松（如选择"无所谓"），验证是否推荐了所有90分及以上的车型
 3. 选择偏好条件较严格，验证是否正确补齐了3个车型
+
+---
+
+
+
+## AI 智能助手模块 — 规划与实现总结（2026-07-15）
+
+> 以下内容基于 PLAN.md 规划和 TODO.md 开发清单，总结 AI 智能助手模块从规划到落地的全过程。
+
+### 一、模块定位
+
+新建独立模块 **aiAssistant**，打造**自然语言为主、五问式为辅**的 AI 智能选车助手，同时建立**用户行为画像**系统，记录用户在全 App 的浏览、收藏、点击等行为，用于优化推荐结果。
+
+**核心价值**：
+- **自然语言优先**：用户直接用口语描述需求，AI 智能理解
+- **五问式辅助**：当用户需求不明确时，自动切换为五问式引导
+- **行为驱动推荐**：用户在全 App 的行为数据影响推荐结果
+- **独立模块**：不依赖 buyingCar/explore 等现有模块，可独立演进
+
+### 二、模块结构
+
+```
+BTYOMI/
+├── features/
+│   ├── buyingCar/        # 已有：购车服务模块
+│   ├── explore/          # 已有：发现探索模块
+│   ├── mine/             # 已有：个人中心模块
+│   ├── service/          # 已有：服务中心模块
+│   ├── shoppingMall/     # 已有：商城模块
+│   └── aiAssistant/      # 新增：AI智能助手模块（独立）
+└── common/
+    └── src/main/ets/
+        ├── model/
+        │   └── UserBehaviorModel.ets   # 用户行为模型（共享）
+        └── utils/
+            └── BehaviorTracker.ets     # 行为埋点工具（共享）
+```
+
+### 三、开发阶段总览
+
+#### 第零阶段：搭架子（框架先行）— 已全部完成
+
+| 任务 | 状态 |
+|------|------|
+| 创建独立 aiAssistant 模块 | ✅ |
+| 定义消息类型枚举 + 消息接口 | ✅ |
+| 定义用户行为画像接口 | ✅ |
+| 定义错误状态接口 + 降级策略常量 | ✅ |
+| ChatService 单例骨架（含火山方舟 API + 降级逻辑） | ✅ |
+| BehaviorTracker 埋点工具（含 Preferences 持久化） | ✅ |
+| AIChatPage 页面骨架（NavDestination + 路由注册） | ✅ |
+| ChatMessageBubble 组件（支持文本/LOADING/ERROR/卡片） | ✅ |
+| ChatInputBar 组件 | ✅ |
+| 页面 Previewer 预览组件 | ✅ |
+| 隐私政策弹窗 | ✅ |
+| QuickQuestions 快捷问题组件 | ✅ |
+
+#### 第一阶段（MVP）— 已全部完成
+
+| 任务 | 状态 |
+|------|------|
+| 聊天界面样式完善 | ✅ |
+| 文本消息收发 | ✅ |
+| 快捷问题按钮组件 | ✅ |
+| AI 回复加载动画 | ✅ |
+| 车型卡片消息组件 | ✅ |
+| 接入火山方舟 API（含降级逻辑、超时10s、重试3次） | ✅ |
+| Prompt 工程设计落地（System Prompt 含角色/能力/约束/画像/完整度策略） | ✅ |
+| 幻觉防护（KNOWN_CARS + validateCarMentions 校验） | ✅ |
+| BehaviorTracker 接入 Preferences 持久化 | ✅ |
+| buyingCar 详情页收藏/浏览埋点 | ✅ |
+| 用户画像基础计算逻辑 | ✅ |
+| 信息完整度计算逻辑（5维度权重 + shouldAskMore阈值） | ✅ |
+| 错误处理与异常流程 | ✅ |
+| AI 真实回复选项解析 | ✅ |
+| extractPreferencesFromMessage 提取到 ChatService | ✅ |
+| Prompt Token 限制和上下文截断策略 | ✅ |
+| 网络状态检测 + 30秒恢复检测 | ✅ |
+| ChatState 接口（ChatService.getState() 统一状态源） | ✅ |
+
+#### 第二阶段（增强）— 已完成8项，2项需真机
+
+| 任务 | 状态 |
+|------|------|
+| 选项消息组件 | ✅ |
+| 自然语言 + 五问式混合模式 | ✅ |
+| 多轮对话上下文（sessionId + 20轮截断） | ✅ |
+| 对比表格消息组件 | ✅ |
+| 用户画像影响推荐权重（冷启动策略） | ✅ |
+| explore / shoppingMall 埋点 | ✅ |
+| 键盘适配与软键盘交互 | ✅ |
+| 快捷问题动态生成 | ✅ |
+| 语音输入 | ❌ 需真机 |
+| 图片上传 | ❌ 需真机 |
+
+#### 第三阶段（优化）— 已完成8项，2项待优化
+
+| 任务 | 状态 |
+|------|------|
+| 消息流式输出（SSE 解析 + 非流式兜底） | ✅ |
+| 消息长按复制（copyOption + TextController + 选中态退出） | ✅ |
+| 推荐结果收藏（♡Toggle + ❤️视觉反馈 + favorite_add/remove事件） | ✅ |
+| 历史对话记录（ChatHistoryManager + 100条上限 + 8KB截断） | ✅ |
+| 消息时间戳分组（>5分钟间隔显示时间标签） | ✅ |
+| 画像数据可视化（ProfileReportPage — 完整度+5维度+统计+清除） | ✅ |
+| 后台/锁屏行为处理（cancelCurrentRequest） | ✅ |
+| 推荐结果车辆卡片（RecommendResult + buildRecommendCard） | ✅ |
+| 新建对话按钮 | ✅ |
+| 个性化推荐精度优化 | ❌ 低优先级 |
+| 性能优化（虚拟滚动、图片缓存） | ❌ 低优先级 |
+
+### 四、整体进度统计
+
+| 阶段 | 已完成 | 未开始 | 合计 |
+|------|--------|--------|------|
+| 第零阶段 | 12 | 0 | 12 |
+| 第一阶段 | 17 | 0 | 17 |
+| 第二阶段 | 8 | 2 | 10 |
+| 第三阶段 | 8 | 2 | 10 |
+| **合计** | **45** | **4** | **49** |
+
+**完成率**：91.8%（45/49），剩余4项均为低优先级或需真机验证
+
+### 五、关键设计决策
+
+1. **ChatService 单例作为唯一状态源** — 两页面不再各自维护 @State messages 副本
+2. **自然语言为主 + 五问式为辅** — 信息完整度驱动追问/推荐模式切换
+3. **推荐卡片从 AI 回复文本提取车型名匹配本地数据库** — 非依赖 AI 返回结构化数据
+4. **System Prompt 限制 AI 只能推荐数据库中的12款车型** — 确保卡片能匹配
+5. **卡片移出气泡75%宽度约束** — 解决溢出问题，卡片占85%屏幕宽度
+6. **收藏 Toggle + 视觉反馈** — ♡/❤️ 动态切换，favorite_add/favorite_remove 事件区分
+7. **SSE 流式 + 非流式兜底** — 先尝试解析 SSE chunks，失败则解析完整 JSON
+8. **冷启动策略** — 前3次对话画像权重0%，逐步提升至30%
+
+### 六、技术债务
+
+| 问题 | 优先级 | 说明 |
+|------|--------|------|
+| API Key 安全风险 | 中 | 硬编码在客户端，需服务端代理 |
+| 语音输入/图片上传 | 低 | 需真机验证 |
+| 个性化推荐精度优化 | 低 | 可后续迭代 |
+| 性能优化 | 低 | 虚拟滚动、图片缓存 |
+| Markdown 渲染 | 低 | AI 回复格式化显示方案未确定 |
+| buyingCarDetailPage 埋点汽车信息硬编码 | 中 | 问界M7硬编码，应动态化 |
+
+### 七、核心文件清单
+
+| 文件 | 职责 |
+|------|------|
+| `common/src/main/ets/model/UserBehaviorModel.ets` | 行为模型 + ProfileCompletenessResult 接口 |
+| `common/src/main/ets/utils/BehaviorTracker.ets` | 跟踪器 + Preferences 持久化 + calculateCompleteness() + clearProfile() |
+| `features/aiAssistant/src/main/ets/model/ChatModel.ets` | ChatMessage + MessageType + CarInfo + ComparisonData + ChatState + RecommendResult |
+| `features/aiAssistant/src/main/ets/service/ChatService.ets` | 单例状态源 + 火山方舟 API(stream) + CAR_DATABASE(12款) + 降级 + Token截断 + SSE解析 + 推荐提取 + 画像注入 |
+| `features/aiAssistant/src/main/ets/service/ChatHistoryManager.ets` | Preferences 持久化，100条/8KB限制 |
+| `features/aiAssistant/src/main/ets/service/NetworkMonitor.ets` | @ohos.net.connection 网络监听 + 30s恢复 |
+| `features/aiAssistant/src/main/ets/components/ChatMessageBubble.ets` | 气泡 + 复制 + 推荐卡片(85%宽度) + ♡Toggle + 选项渲染 |
+| `features/aiAssistant/src/main/ets/components/ChatInputBar.ets` | 输入框 + 发送 + loading |
+| `features/aiAssistant/src/main/ets/pages/AIAssistantPage.ets` | 主页：📊画像按钮 + 新对话 + 隐私弹窗 + 收藏回调 |
+| `features/aiAssistant/src/main/ets/pages/AIChatPage.ets` | 聊天页：📊画像按钮 + 新对话 + 收藏回调 |
+| `features/aiAssistant/src/main/ets/pages/ProfileReportPage.ets` | 画像报告页：完整度 + 5维度 + 偏好详情 + 统计 + 清除 |
+| `entry/src/main/ets/entryability/EntryAbility.ets` | KeyboardAvoidMode.RESIZE + onBackground取消请求 |
+| `entry/src/main/ets/pages/NavigationPage.ets` | PagesMap 含所有 AI 助手页面路由 |
+| `entry/src/main/module.json5` | INTERNET + GET_NETWORK_INFO 权限 |
+
+
+---
+
+## AI 助手推荐卡片与收藏功能修复（2026-07-15）
+
+### 一、问题描述
+
+1. **推荐卡片不显示**：AI 回复中只有文字，没有附带推荐卡片
+2. **卡片宽度溢出**：卡片超出屏幕可视范围
+3. **收藏按钮无反应**：点击♡按钮没有视觉反馈，再次点击不会取消收藏
+
+### 二、问题根因分析
+
+#### 问题1：推荐卡片不显示
+
+**根因**：
+1. `tryExtractRecommendResults()` 被条件 `isRecommendMode` 限制，仅在完整度足够时执行，导致追问模式下不提取
+2. AI 推荐的车型（如"吉利银河E5"）不在 CAR_DATABASE 中（仅8款），匹配永远失败
+3. System Prompt 未限制 AI 只推荐数据库中的车型
+
+**日志证据**：
+```
+parseStreamResponse got content length=154, content=[吉利银河E5 2024款...]
+tryExtractRecommendResults: NO cars matched from 8 cars in database
+tryExtractRecommendResults: results=undefined
+```
+
+#### 问题2：卡片宽度溢出
+
+**根因**：推荐卡片在 `constraintSize({ maxWidth: '75%' })` 的气泡 Column 内，卡片自身 `.width('100%')` 加上内边距后溢出
+
+#### 问题3：收藏按钮无反应
+
+**根因**：
+1. `onFavoriteCar` 回调仅调用 `BehaviorTracker.track()`，无视觉反馈
+2. 没有收藏/取消收藏的 toggle 逻辑
+3. 按钮使用固定文字 '♡'，状态变化不会触发 UI 刷新
+
+### 三、修复内容
+
+#### 1. 移除推荐模式条件限制
+
+**文件**：`ChatService.ets`
+
+**修复**：`tryExtractRecommendResults` 对所有 AI 回复都执行提取
+
+```typescript
+// 修复前
+const isRecommendMode = completeness !== undefined && !completeness.shouldAskMore;
+const recommendResults = isRecommendMode ? this.tryExtractRecommendResults(fullContent) : undefined;
+
+// 修复后
+const recommendResults = this.tryExtractRecommendResults(fullContent);
+```
+
+#### 2. 扩充 CAR_DATABASE
+
+**文件**：`ChatService.ets`
+
+**修复**：从8款扩充到12款，新增热门车型：
+
+| ID | 品牌 | 型号 | 价格 | 续航 | 类型 |
+|----|------|------|------|------|------|
+| 9 | 吉利 | 银河E5 | 14.98万 | 660km | 纯电SUV |
+| 10 | 极氪 | 007 | 22.99万 | 688km | 纯电轿车 |
+| 11 | 小米 | SU7 | 21.59万 | 668km | 纯电轿车 |
+| 12 | 深蓝 | SL03 | 15.99万 | 515km | 纯电轿车 |
+
+#### 3. System Prompt 限制推荐范围
+
+**文件**：`ChatService.ets`
+
+**修复**：在角色设定中明确告知 AI 只能推荐数据库中的车型
+
+```
+- 你只能推荐以下数据库中的车型，绝不能推荐其他车型：
+  比亚迪汉EV、比亚迪宋PLUS EV、特斯拉Model 3、小鹏P7、蔚来ET5、
+  理想L7、问界M7、大众ID.3、吉利银河E5、极氪007、小米SU7、深蓝SL03
+```
+
+#### 4. 增强车型名匹配逻辑
+
+**文件**：`ChatService.ets`
+
+**修复**：增加带空格的车型名匹配（"比亚迪 宋PLUS EV"）
+
+```typescript
+const fullName: string = car.brand + car.model;           // "比亚迪宋PLUS EV"
+const fullNameWithSpace: string = car.brand + ' ' + car.model; // "比亚迪 宋PLUS EV"
+if (content.indexOf(fullName) >= 0 || content.indexOf(fullNameWithSpace) >= 0 || content.indexOf(car.model) >= 0) {
+```
+
+#### 5. 卡片移出75%宽度约束
+
+**文件**：`ChatMessageBubble.ets`
+
+**修复**：将推荐卡片和选项按钮从气泡 Column（maxWidth:75%）中移出，放到外层 Column，卡片宽度85%屏幕，左margin与头像对齐
+
+```typescript
+// 修复前：卡片在 constraintSize({ maxWidth: '75%' }) 的 Column 内
+Column() {
+  Text(content)
+  Text('复制')
+  buildRecommendCards()  // 被限制在75%宽度内
+}.constraintSize({ maxWidth: '75%' })
+
+// 修复后：卡片在外层，不受75%约束
+Column() {
+  Row() {
+    头像
+    Column() {
+      Text(content)
+      Text('复制')
+    }.constraintSize({ maxWidth: '75%' })
+  }
+  buildRecommendCards()  // 宽度85%，不受75%限制
+}.padding({ left: 16, right: 16 })
+```
+
+#### 6. 卡片尺寸缩小
+
+**文件**：`ChatMessageBubble.ets`
+
+**修复**：缩小图片区域（80x64→56x48）、字号（15→14/13→12）、间距、padding，只显示2条推荐理由
+
+#### 7. 收藏按钮 Toggle + 视觉反馈
+
+**文件**：`ChatMessageBubble.ets`
+
+**修复**：
+- 添加 `@State favoritedCarIds: number[]` 记录收藏状态
+- ♡/❤️ 根据 `isCarFavorited()` 动态切换
+- `toggleFavorite()` 实现真正的 toggle（再点取消收藏）
+- `onFavoriteCar` 回调增加 `isFavorited: boolean` 参数
+
+```typescript
+// 视觉反馈
+Text(this.isCarFavorited(result.car.id) ? '❤️' : '♡')
+  .fontColor(this.isCarFavorited(result.car.id) ? '#E74C3C' : '#CCCCCC')
+
+// Toggle 逻辑
+this.toggleFavorite(result.car.id);
+this.onFavoriteCar(result.car, this.isCarFavorited(result.car.id));
+```
+
+**文件**：`AIAssistantPage.ets`、`AIChatPage.ets`
+
+**修复**：`handleFavoriteCar` 增加 `isFavorited` 参数，区分 `favorite_add` / `favorite_remove` 事件
+
+```typescript
+private handleFavoriteCar(car: CarInfo, isFavorited: boolean): void {
+  const event: BehaviorEvent = {
+    eventType: isFavorited ? 'favorite_add' : 'favorite_remove',
+    // ...
+  };
+  this.behaviorTracker.track(event);
+}
+```
+
+#### 8. 添加 hilog 调试日志
+
+**文件**：`ChatService.ets`
+
+**修复**：在 `getAIResponse`、`parseStreamResponse`、`tryExtractRecommendResults` 关键路径添加 hilog，便于定位问题
+
+### 四、修复总结
+
+| 文件 | 问题类型 | 修复方案 |
+|------|----------|----------|
+| ChatService.ets | 推荐卡片不显示 | 移除条件限制 + 扩充数据库 + Prompt限制 + 匹配增强 |
+| ChatService.ets | 调试困难 | 添加 hilog 日志 |
+| ChatMessageBubble.ets | 卡片溢出 | 卡片移出75%约束 + 缩小尺寸 |
+| ChatMessageBubble.ets | 收藏无反馈 | Toggle逻辑 + ❤️视觉反馈 |
+| AIAssistantPage.ets | 事件区分 | favorite_add/favorite_remove |
+| AIChatPage.ets | 事件区分 | favorite_add/favorite_remove |
+| ProfileReportPage.ets | 状态栏遮挡 | hideTitleBar(true)+自定义标题+topHeight padding |
+
+### 五、验证方式
+
+1. 进入 AI 助手，发送"推荐一款20万左右的SUV"
+2. 确认 AI 回复下方出现推荐卡片（品牌型号+价格续航+匹配度+推荐理由）
+3. 确认卡片宽度在屏幕可视范围内
+4. 点击♡按钮，确认变❤️（红色）
+5. 再次点击❤️，确认变回♡（取消收藏）
+
+---

@@ -21,6 +21,7 @@ import { ShoppingMallPage } from '@ohos/shoppingMall';
 import { BuyingCarPage } from '@ohos/buyingCar';
 import { ServicePage } from '@ohos/service';
 import { MinePage } from '@ohos/mine';
+import { AIAssistantPage } from '@ohos/aiAssistant';
 
 @Component
 export struct TabPage {
@@ -37,14 +38,12 @@ export struct TabPage {
   @Builder
   BuildTabs(icon: ResourceStr, title: ResourceStr, index: number) {
     Column({ space: CommonConstants.PUBLIC_SPACE / 2 }) {
-      Image(this.currentTabIndex === 0 && this.currentTabIndex === index ? $r('app.media.bottomtab_item_special') :
-        icon)
-        .width(this.currentTabIndex === 0 && this.currentTabIndex === index ? TabConstants.TAB_ICON_WIDTH * 3 / 2 :
-          TabConstants.TAB_ICON_WIDTH)
-        .height(this.currentTabIndex === 0 && this.currentTabIndex === index ? TabConstants.TAB_ICON_WIDTH * 3 / 2 :
-          TabConstants.TAB_ICON_HEIGHT)
+      Image(icon)
+        .width(TabConstants.TAB_ICON_WIDTH)
+        .height(TabConstants.TAB_ICON_HEIGHT)
+        .objectFit(ImageFit.Contain)
         .fillColor(this.currentTabIndex === index ? TabConstants.SELE_COLOR : TabConstants.DEF_COLOR);
-      Text(this.currentTabIndex === 0 && this.currentTabIndex === index ? '' : title)
+      Text(title)
         .fontSize(CommonConstants.S_FONT_SIZE)
         .fontWeight(FontWeight.Regular)
         .fontColor(this.currentTabIndex !== index ? TabConstants.DEF_COLOR : TabConstants.SELE_COLOR);
@@ -89,17 +88,24 @@ export struct TabPage {
 
               TabContent() {
                 if (this.currentTabIndex === 3) {
-                  ServicePage();
+                  AIAssistantPage();
                 }
               }
-              .tabBar(this.BuildTabs($r('app.media.service'), '服务', 3));
+              .tabBar(this.BuildTabs($r('app.media.chat'), 'AI助手', 3));
 
               TabContent() {
                 if (this.currentTabIndex === 4) {
+                  ServicePage();
+                }
+              }
+              .tabBar(this.BuildTabs($r('app.media.service'), '服务', 4));
+
+              TabContent() {
+                if (this.currentTabIndex === 5) {
                   MinePage();
                 }
               }
-              .tabBar(this.BuildTabs($r('app.media.person'), '我的', 4));
+              .tabBar(this.BuildTabs($r('app.media.person'), '我的', 5));
             }
             .vertical(this.breakPoint === CommonConstants.BREAK_POINT_LG)
             .barWidth(this.breakPoint === CommonConstants.BREAK_POINT_LG ? TabConstants.TAB_BAR_L_WIDTH :

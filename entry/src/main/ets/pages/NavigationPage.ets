@@ -23,6 +23,7 @@ import { SettingsPage } from '@ohos/mine';
 import { OptimalStation } from '@ohos/service';
 import { MyCharge } from '@ohos/service';
 import { BuyingCarDetailPage, AICarSelectPage } from '@ohos/buyingCar';
+import { AIChatPage, ProfileReportPage } from '@ohos/aiAssistant';
 
 @Entry
 @Component
@@ -47,6 +48,10 @@ struct NavigationPage {
       BuyingCarDetailPage();
     } else if (name === 'AICarSelectPage') { // AI选车
       AICarSelectPage();
+    } else if (name === 'AIChatPage') { // AI智能助手
+      AIChatPage();
+    } else if (name === 'ProfileReportPage') { // 用户偏好报告
+      ProfileReportPage();
     } else if (name === 'SettingsPage') { //  我的设置
       SettingsPage();
     } else if (name === 'OptimalStation') { // 最优站点
