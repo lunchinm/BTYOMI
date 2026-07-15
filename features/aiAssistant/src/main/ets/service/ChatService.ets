@@ -902,6 +902,10 @@ export class ChatService {
       searchExtra['brand'] = '小米';
     } else if (content.indexOf('大众') >= 0) {
       searchExtra['brand'] = '大众';
+    } else if (content.indexOf('吉利') >= 0) {
+      searchExtra['brand'] = '吉利';
+    } else if (content.indexOf('深蓝') >= 0) {
+      searchExtra['brand'] = '深蓝';
     }
 
     if (Object.keys(searchExtra).length > 0) {
